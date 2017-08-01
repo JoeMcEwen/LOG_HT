@@ -21,10 +21,10 @@
 	following definitions: 
 	F(k)=\int_0^\infty f(r)  J_\mu(kr) r dr
 	f(r)= \int_0^\infty F(k)  J_\mu(kr) k dk . 
-	
-	
-	
+		
 '''
+
+from __future__ import division 
 
 import numpy as np
 from numpy.fft import fft, ifft , fftshift, ifftshift , rfft, irfft 
@@ -35,6 +35,39 @@ from numpy import gradient as grad
 import sys
 
 log2=log(2)
+cut=200  # cutoff to switch to Gamma function limiting case (needed when argument to 
+         # gamma function is large) 
+
+def g_m_vals(mu,q):
+
+	imag_q= np.imag(q)
+	
+	g_m=np.zeros(q.size, dtype=complex)
+
+
+	asym_q=q[np.absolute(imag_q) >cut]
+	asym_plus=(mu+1+asym_q)/2.
+	asym_minus=(mu+1-asym_q)/2.
+	
+	q_good=q[ (np.absolute(imag_q) <=cut) & (q!=mu + 1 + 0.0j)]
+
+	alpha_plus=(mu+1+q_good)/2.
+	alpha_minus=(mu+1-q_good)/2.
+	
+	g_m[(np.absolute(imag_q) <=cut) & (q!= mu + 1 + 0.0j)] =gamma(alpha_plus)/gamma(alpha_minus)
+
+	#g_m[np.absolute(imag_q)>cut] = exp( (asym_plus-0.5)*log(asym_plus) - (asym_minus-0.5)*log(asym_minus) - asym_q )
+	
+	#g_m[np.absolute(imag_q)>cut] = exp( (asym_plus-0.5)*log(asym_plus) - (asym_minus-0.5)*log(asym_minus) - asym_q \
+	#								+1./12 *(1./asym_plus - 1./asym_minus) +1./360.*(1./asym_minus**3 - 1./asym_plus**3) )
+	
+	# to higher order 								
+	g_m[np.absolute(imag_q)>cut] = exp( (asym_plus-0.5)*log(asym_plus) - (asym_minus-0.5)*log(asym_minus) - asym_q \
+	    +1./12 *(1./asym_plus - 1./asym_minus) +1./360.*(1./asym_minus**3 - 1./asym_plus**3) +1./1260*(1./asym_plus**5 - 1./asym_minus**5) )
+
+	g_m[np.where(q==mu+1+0.0j)[0]] = 0.+0.0j
+	
+	return g_m
 
 def log_gamma(z):
 	
@@ -45,10 +78,9 @@ def log_gamma(z):
 	return x,y
 	
 def get_k0(N,mu,q,r0,L,k0):
-	
-	
+		
 	kr=float(k0*r0)
-	delta_L=L/N
+	delta_L=L/float(N)
 	
 	x=q + 1j*pi/delta_L
 	
@@ -88,7 +120,24 @@ def u_m_vals(m,mu,q,kr,L):
 	u_m[m.size-1]=np.real(u_m[m.size-1])
 	return u_m
 	
+def u_m_vals_new(m,mu,q,kr,L):
+
+    omega=1j*2*pi*m/L
+
+    x=q + omega
+       
+    two_part=2**x 
+       
+    U_mu=2**x*g_m_vals(mu,x)
+    
+    u_m=(kr)**(-omega)*U_mu
+    
+    u_m[m.size-1]=np.real(u_m[m.size-1])
+    
+    return u_m 
+    
 def fft_log(k,f_k,q,mu):
+
 
 	if ((q+mu) < -1) :
 		print 'Error in reality condition for Bessel function integration.'
@@ -104,7 +153,7 @@ def fft_log(k,f_k,q,mu):
 		
 				
 	N=f_k.size
-	delta_L=(log(np.max(k))-log(np.min(k)))/(N-1)
+	delta_L=(log(np.max(k))-log(np.min(k)))/float(N-1)
 	#delta_L10=(np.log10(np.max(k))-np.log10(np.min(k)))/(N-1)
 	L=(log(np.max(k))-log(np.min(k)))
 		
@@ -117,7 +166,7 @@ def fft_log(k,f_k,q,mu):
 		sys.exit()
 		
 	
-	log_k0=log(k[N/2])
+	log_k0=log(k[N//2])
 	k0=exp(log_k0)
 	
 	# Fourier transform input data 
@@ -132,7 +181,7 @@ def fft_log(k,f_k,q,mu):
 	log_r0=log(r0)
 	
 	m=np.fft.rfftfreq(N,d=1.)*float(N)
-	m_r=np.arange(-N/2,N/2)
+	m_r=np.arange(-N//2,N//2)
 	m_shift=np.fft.fftshift(m_r)
 	
 	
@@ -146,7 +195,8 @@ def fft_log(k,f_k,q,mu):
 	# get h array 	
 	h=delta_L*m + log_k0
 		
-	u_m=u_m_vals(m,mu,q,kr,L)
+	u_m=u_m_vals_new(m,mu,q,kr,L)
+	#u_m=u_m_vals(m,mu,q,kr,L) old version will crash for large data set 
 
 	b=c_m*u_m
 		
