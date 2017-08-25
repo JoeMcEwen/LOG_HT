@@ -7,7 +7,7 @@ McEwen Laboratories (c) 2016
 email: jmcewen314@gmail.com
 '''
 
-
+from __future__ import division 
 import numpy as np
 from LOG_HT import r_to_k, k_to_r 
 

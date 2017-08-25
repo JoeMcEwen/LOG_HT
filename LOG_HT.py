@@ -140,15 +140,15 @@ def fft_log(k,f_k,q,mu):
 
 
 	if ((q+mu) < -1) :
-		print 'Error in reality condition for Bessel function integration.'
-		print ' q+mu is less than -1.'
-		print 'See Abramowitz and Stegun. Handbook of Mathematical Functions pg. 486'
+		print('Error in reality condition for Bessel function integration.')
+		print(' q+mu is less than -1.')
+		print('See Abramowitz and Stegun. Handbook of Mathematical Functions pg. 486')
 		
 	
 	if ( q > 1/2.) :
-		print 'Error in reality condition for Bessel function integration.'
-		print ' q is greater than 1/2'
-		print 'See Abramowitz and Stegun. Handbook of Mathematical Functions pg. 486'
+		print('Error in reality condition for Bessel function integration.')
+		print(' q is greater than 1/2')
+		print('See Abramowitz and Stegun. Handbook of Mathematical Functions pg. 486')
 
 		
 				
@@ -161,8 +161,8 @@ def fft_log(k,f_k,q,mu):
 	diff=np.diff(np.log(k))
 	diff=np.diff(diff)
 	if (np.sum(diff) >=1e-10):
-		print 'You need to send in data that is sampled evenly in logspace'
-		print 'Terminating code in fft_log'
+		print('You need to send in data that is sampled evenly in logspace')
+		print('Terminating code in fft_log')
 		sys.exit()
 		
 	
